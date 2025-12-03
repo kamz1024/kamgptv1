@@ -5,18 +5,14 @@
  */
 import { Env } from "./types";
 
-// We MUST use a Vision model to process images. 
-// Llama 3.3 is text-only, so we switch to Llama 3.2 11B Vision.
+// Llama 3.2 11B Vision Instruct
 const MODEL_ID = "@cf/meta/llama-3.2-11b-vision-instruct";
 
 // Default system prompt
 const SYSTEM_PROMPT =
-	"You are a helpful, friendly assistant named Kam GPT, developed by your founder who's named kam, you are here to become a AI copy of kam, Provide concise and cool responses, make jokes and have and engage the user with fun and brazen responses. nsfw and dirty jokes and swearing are all permitted. You can also see and describe images provided by the user.";
+	"You are a helpful, friendly assistant named Kam GPT, developed by your founder who's named kam. Provide concise and cool responses, make jokes and engage the user. You can also see and describe images provided by the user.";
 
 export default {
-	/**
-	 * Main request handler for the Worker
-	 */
 	async fetch(
 		request: Request,
 		env: Env,
@@ -24,24 +20,16 @@ export default {
 	): Promise<Response> {
 		const url = new URL(request.url);
 
-		// Handle static assets (frontend)
-		// This serves your index.html
+		// Serve static assets (frontend)
 		if (url.pathname === "/" || !url.pathname.startsWith("/api/")) {
 			return env.ASSETS.fetch(request);
 		}
 
 		// API Routes
-		if (url.pathname === "/api/chat") {
-			// Handle POST requests for chat
-			if (request.method === "POST") {
-				return handleChatRequest(request, env);
-			}
-
-			// Method not allowed for other request types
-			return new Response("Method not allowed", { status: 405 });
+		if (url.pathname === "/api/chat" && request.method === "POST") {
+			return handleChatRequest(request, env);
 		}
 
-		// Handle 404 for unmatched routes
 		return new Response("Not found", { status: 404 });
 	},
 } satisfies ExportedHandler<Env>;
@@ -54,71 +42,88 @@ async function handleChatRequest(
 	env: Env,
 ): Promise<Response> {
 	try {
-		// 1. Parse the new JSON body format from index.html
-		// The frontend now sends: { prompt: "text", image: "base64...", history: [...] }
 		const body = (await request.json()) as any;
 		const { prompt, image, history = [] } = body;
 
 		let messages = [];
 
-		// 2. Add system prompt
+		// 1. Add system prompt
 		messages.push({ role: "system", content: SYSTEM_PROMPT });
 
-		// 3. Add History
-		// We pass the previous text history to keep context
+		// 2. Add History (Sanitized)
+		// CRITICAL FIX: We must NOT send the huge Base64 image back in the history 
+		// for every subsequent request, or we will hit token/size limits immediately.
 		if (Array.isArray(history)) {
 			history.forEach((msg: any) => {
-				messages.push({ role: msg.role, content: msg.content });
+				// If the message content was an array (meaning it had an image + text)
+				if (Array.isArray(msg.content)) {
+					// We extract ONLY the text part for history context
+					const textPart = msg.content.find((c: any) => c.type === 'text');
+					if (textPart) {
+						messages.push({ role: msg.role, content: textPart.text });
+					}
+				} else {
+					// Simple text message
+					messages.push({ role: msg.role, content: msg.content });
+				}
 			});
 		}
 
-		// 4. Construct the Current Message
-		// Vision models require a specific array structure for mixed text/image content
+		// 3. Construct Current User Message
 		let userContent = [];
 
-		// Add text if it exists
 		if (prompt) {
 			userContent.push({ type: "text", text: prompt });
 		}
 
-		// Add image if it exists (must be base64 string)
 		if (image) {
 			userContent.push({
 				type: "image_url",
-				image_url: { url: image },
+				image_url: { url: image }, // Expects "data:image/png;base64,..."
 			});
 		}
 
-		// If the user sent nothing, return an error
 		if (userContent.length === 0) {
-			return new Response(
-				JSON.stringify({ response: "Please say something or upload an image." }),
-				{ headers: { "content-type": "application/json" } }
-			);
+			throw new Error("No text or image provided");
 		}
 
-		// Push the combined user message
 		messages.push({ role: "user", content: userContent });
 
-		// 5. Run the Vision AI Model
-		// Note: We use standard response (not streaming) to match your index.html's `await response.json()`
+		// 4. Run AI
 		const response = await env.AI.run(MODEL_ID, {
 			messages,
 			max_tokens: 1024,
 		});
 
-		// 6. Return Response
-		// Cloudflare Workers AI usually returns an object like { response: "Hello..." }
-		return new Response(JSON.stringify(response), {
+		// 5. Parse Response (Robustness Fix)
+		// Handles different return structures to prevent "undefined"
+		let replyText = "I couldn't generate a response.";
+		
+		// @ts-ignore - Dynamic check for property existence
+		if (typeof response === 'object' && response) {
+			// @ts-ignore
+			if (response.response) replyText = response.response;
+			// @ts-ignore
+			else if (response.description) replyText = response.description;
+			// @ts-ignore
+			else if (response.result && response.result.response) replyText = response.result.response;
+			else replyText = JSON.stringify(response); // Fallback: send raw JSON
+		} else if (typeof response === 'string') {
+			replyText = response;
+		}
+
+		return new Response(JSON.stringify({ response: replyText }), {
 			headers: { "content-type": "application/json" },
 		});
 
 	} catch (error) {
-		console.error("Error processing chat request:", error);
+		console.error("Error:", error);
+		// CRITICAL FIX: Return the error as a 'response' so the user sees it in the chat
+		// instead of seeing "undefined".
 		return new Response(
-			JSON.stringify({ error: "Failed to process request: " + (error as Error).message }),
+			JSON.stringify({ response: "Error: " + (error as Error).message }),
 			{
-				status: 500,
+				status: 200, // Return 200 so the frontend displays the error text bubble
 				headers: { "content-type": "application/json" },
 			},
 		);
