@@ -1,369 +1,353 @@
 <!doctype html>
+
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>KAM GPT</title>
-		<style>
-			:root {
-				--primary-color: #f6821f;
-				--primary-hover: #e67e22;
-				--light-bg: #f9fafb;
-				--border-color: #e5e7eb;
-				--text-color: #1f2937;
-				--text-light: #6b7280;
-				--user-msg-bg: #fff2e6;
-				--assistant-msg-bg: #f3f4f6;
-			}
 
-			* {
-				box-sizing: border-box;
-				margin: 0;
-				padding: 0;
-			}
+<head>
 
-			body {
-				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-				line-height: 1.6;
-				color: var(--text-color);
-				max-width: 800px;
-				margin: 0 auto;
-				padding: 1rem;
-			}
+<meta charset="UTF-8" />
 
-			header {
-				text-align: center;
-				margin-bottom: 2rem;
-				padding: 1rem 0;
-				border-bottom: 1px solid var(--border-color);
-			}
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-			h1 {
-				font-size: 1.5rem;
-				color: var(--primary-color);
-			}
+<title>KAM GPT</title>
 
-			.chat-container {
-				display: flex;
-				flex-direction: column;
-				height: calc(100vh - 200px);
-				min-height: 400px;
-				border: 1px solid var(--border-color);
-				border-radius: 8px;
-				overflow: hidden;
-				position: relative;
-			}
+<style>
 
-			.chat-messages {
-				flex: 1;
-				overflow-y: auto;
-				padding: 1rem;
-				background-color: var(--light-bg);
-			}
+:root {
 
-			.message {
-				margin-bottom: 1rem;
-				padding: 0.75rem;
-				border-radius: 8px;
-				max-width: 80%;
-				word-wrap: break-word;
-			}
+--primary-color: #f6821f;
 
-			.message img {
-				max-width: 100%;
-				border-radius: 6px;
-				margin-bottom: 0.5rem;
-				display: block;
-			}
+--primary-hover: #e67e22;
 
-			.user-message {
-				background-color: var(--user-msg-bg);
-				align-self: flex-end;
-				margin-left: auto;
-			}
+--light-bg: #f9fafb;
 
-			.assistant-message {
-				background-color: var(--assistant-msg-bg);
-				align-self: flex-start;
-			}
+--border-color: #e5e7eb;
 
-			/* Input Area Styling */
-			.input-wrapper {
-				background: white;
-				border-top: 1px solid var(--border-color);
-				padding: 0.75rem;
-			}
+--text-color: #1f2937;
 
-			/* Image Preview Styling */
-			#image-preview-container {
-				display: none;
-				padding-bottom: 0.5rem;
-				border-bottom: 1px solid #eee;
-				margin-bottom: 0.5rem;
-			}
-			
-			.preview-box {
-				display: inline-block;
-				position: relative;
-			}
+--text-light: #6b7280;
 
-			.preview-box img {
-				height: 60px;
-				border-radius: 4px;
-				border: 1px solid #ddd;
-			}
+--user-msg-bg: #fff2e6;
 
-			.remove-img-btn {
-				position: absolute;
-				top: -5px;
-				right: -5px;
-				background: red;
-				color: white;
-				border: none;
-				border-radius: 50%;
-				width: 18px;
-				height: 18px;
-				font-size: 12px;
-				cursor: pointer;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-			}
+--assistant-msg-bg: #f3f4f6;
 
-			.message-input {
-				display: flex;
-				gap: 0.5rem;
-				align-items: flex-end;
-			}
+}
 
-			#user-input {
-				flex: 1;
-				padding: 0.75rem;
-				border: 1px solid var(--border-color);
-				border-radius: 4px;
-				font-family: inherit;
-				resize: none;
-				min-height: 44px;
-				max-height: 120px;
-			}
 
-			/* Buttons */
-			.btn {
-				height: 44px;
-				padding: 0 1rem;
-				border: none;
-				border-radius: 4px;
-				cursor: pointer;
-				transition: background-color 0.2s;
-				font-weight: 500;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-			}
 
-			#attach-button {
-				background-color: #f3f4f6;
-				color: #555;
-				width: 44px;
-				padding: 0;
-				font-size: 1.2rem;
-			}
+* {
 
-			#attach-button:hover {
-				background-color: #e5e7eb;
-			}
+box-sizing: border-box;
 
-			#send-button {
-				background-color: var(--primary-color);
-				color: white;
-			}
+margin: 0;
 
-			#send-button:hover {
-				background-color: var(--primary-hover);
-			}
+padding: 0;
 
-			#send-button:disabled {
-				background-color: var(--text-light);
-				cursor: not-allowed;
-			}
+}
 
-			.typing-indicator {
-				display: none;
-				margin-bottom: 1rem;
-				font-style: italic;
-				color: var(--text-light);
-				padding: 0 1rem;
-			}
 
-			.typing-indicator.visible {
-				display: block;
-			}
 
-			footer {
-				margin-top: 1rem;
-				text-align: center;
-				font-size: 0.85rem;
-				color: var(--text-light);
-			}
-		</style>
-	</head>
-	<body>
-		<header>
-			<h1>KAMGPT</h1>
-			<p>Powered by Kamgroup Technicals</p>
-		</header>
+body {
 
-		<div class="chat-container">
-			<div id="chat-messages" class="chat-messages">
-				<div class="message assistant-message">
-					<p>Hello! You have reached KAM's AI. I can now see images! Upload a photo or ask me anything.</p>
-				</div>
-			</div>
+font-family:
 
-			<div class="typing-indicator" id="typing-indicator">
-				AI is thinking...
-			</div>
+-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
 
-			<div class="input-wrapper">
-				<!-- Image Preview Container -->
-				<div id="image-preview-container">
-					<div class="preview-box">
-						<img id="image-preview-img" src="" alt="Preview">
-						<button class="remove-img-btn" onclick="clearImage()">×</button>
-					</div>
-				</div>
+Cantarell, sans-serif;
 
-				<div class="message-input">
-					<!-- Hidden File Input -->
-					<input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleFileSelect()">
-					
-					<!-- Attachment Button -->
-					<button id="attach-button" class="btn" onclick="document.getElementById('file-input').click()" title="Attach Image">
-						📎
-					</button>
+line-height: 1.6;
 
-					<textarea
-						id="user-input"
-						placeholder="Type your message here..."
-						rows="1"
-						autofocus
-					></textarea>
-					<button id="send-button" class="btn">Send</button>
-				</div>
-			</div>
-		</div>
+color: var(--text-color);
 
-		<footer>
-			<p>Kamgroup holdings &copy; 2025</p>
-		</footer>
+max-width: 800px;
 
-		<script>
-			// --- Logic embedded directly to avoid needing chat.js ---
-			const chatMessages = document.getElementById('chat-messages');
-			const userInput = document.getElementById('user-input');
-			const sendButton = document.getElementById('send-button');
-			const typingIndicator = document.getElementById('typing-indicator');
-			const fileInput = document.getElementById('file-input');
-			const imagePreviewContainer = document.getElementById('image-preview-container');
-			const imagePreviewImg = document.getElementById('image-preview-img');
+margin: 0 auto;
 
-			let currentBase64Image = null;
-			let history = [];
+padding: 1rem;
 
-			// Auto-resize textarea
-			userInput.addEventListener('input', function() {
-				this.style.height = 'auto';
-				this.style.height = (this.scrollHeight) + 'px';
-			});
+}
 
-			// Handle File Selection
-			function handleFileSelect() {
-				const file = fileInput.files[0];
-				if (file) {
-					const reader = new FileReader();
-					reader.onload = function(e) {
-						currentBase64Image = e.target.result;
-						imagePreviewImg.src = currentBase64Image;
-						imagePreviewContainer.style.display = 'block';
-					};
-					reader.readAsDataURL(file);
-				}
-			}
 
-			// Clear selected image
-			function clearImage() {
-				fileInput.value = '';
-				currentBase64Image = null;
-				imagePreviewContainer.style.display = 'none';
-			}
 
-			// Add message to UI
-			function addMessage(role, text, imageSrc = null) {
-				const messageDiv = document.createElement('div');
-				messageDiv.className = `message ${role}-message`;
-				
-				let content = '';
-				if (imageSrc) {
-					content += `<img src="${imageSrc}" alt="Uploaded image">`;
-				}
-				content += `<p>${text}</p>`;
-				
-				messageDiv.innerHTML = content;
-				chatMessages.appendChild(messageDiv);
-				chatMessages.scrollTop = chatMessages.scrollHeight;
-			}
+header {
 
-			// Send Message Logic
-			async function sendMessage() {
-				const text = userInput.value.trim();
-				const imageToSend = currentBase64Image;
+text-align: center;
 
-				if (!text && !imageToSend) return;
+margin-bottom: 2rem;
 
-				// UI Updates
-				addMessage('user', text, imageToSend);
-				userInput.value = '';
-				userInput.style.height = 'auto';
-				clearImage(); // Clear preview
-				
-				sendButton.disabled = true;
-				typingIndicator.classList.add('visible');
+padding: 1rem 0;
 
-				try {
-					const response = await fetch('/api/chat', {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ 
-							prompt: text,
-							image: imageToSend, // Send Base64 image
-							history: history 
-						})
-					});
+border-bottom: 1px solid var(--border-color);
 
-					const data = await response.json();
-					
-					typingIndicator.classList.remove('visible');
-					addMessage('assistant', data.response);
+}
 
-					// Keep simple history
-					history.push({ role: 'user', content: text });
-					history.push({ role: 'assistant', content: data.response });
 
-				} catch (error) {
-					typingIndicator.classList.remove('visible');
-					addMessage('assistant', "Error: " + error.message);
-				}
 
-				sendButton.disabled = false;
-			}
+h1 {
 
-			sendButton.addEventListener('click', sendMessage);
-			userInput.addEventListener('keypress', (e) => {
-				if (e.key === 'Enter' && !e.shiftKey) {
-					e.preventDefault();
-					sendMessage();
-				}
-			});
-		</script>
-	</body>
+font-size: 1.5rem;
+
+color: var(--primary-color);
+
+}
+
+
+
+.chat-container {
+
+display: flex;
+
+flex-direction: column;
+
+height: calc(100vh - 200px);
+
+min-height: 400px;
+
+border: 1px solid var(--border-color);
+
+border-radius: 8px;
+
+overflow: hidden;
+
+}
+
+
+
+.chat-messages {
+
+flex: 1;
+
+overflow-y: auto;
+
+padding: 1rem;
+
+background-color: var(--light-bg);
+
+}
+
+
+
+.message {
+
+margin-bottom: 1rem;
+
+padding: 0.75rem;
+
+border-radius: 8px;
+
+max-width: 80%;
+
+}
+
+
+
+.user-message {
+
+background-color: var(--user-msg-bg);
+
+align-self: flex-end;
+
+margin-left: auto;
+
+}
+
+
+
+.assistant-message {
+
+background-color: var(--assistant-msg-bg);
+
+align-self: flex-start;
+
+}
+
+
+
+.message-input {
+
+display: flex;
+
+padding: 0.75rem;
+
+border-top: 1px solid var(--border-color);
+
+background-color: white;
+
+}
+
+
+
+#user-input {
+
+flex: 1;
+
+padding: 0.75rem;
+
+border: 1px solid var(--border-color);
+
+border-radius: 4px;
+
+font-family: inherit;
+
+resize: none;
+
+min-height: 44px;
+
+}
+
+
+
+#send-button {
+
+margin-left: 0.5rem;
+
+padding: 0 1rem;
+
+background-color: var(--primary-color);
+
+color: white;
+
+border: none;
+
+border-radius: 4px;
+
+cursor: pointer;
+
+transition: background-color 0.2s;
+
+}
+
+
+
+#send-button:hover {
+
+background-color: var(--primary-hover);
+
+}
+
+
+
+#send-button:disabled {
+
+background-color: var(--text-light);
+
+cursor: not-allowed;
+
+}
+
+
+
+.typing-indicator {
+
+display: none;
+
+margin-bottom: 1rem;
+
+font-style: italic;
+
+color: var(--text-light);
+
+}
+
+
+
+.typing-indicator.visible {
+
+display: block;
+
+}
+
+
+
+footer {
+
+margin-top: 1rem;
+
+text-align: center;
+
+font-size: 0.85rem;
+
+color: var(--text-light);
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<h1>KAMGPT</h1>
+
+<p>Powered by Kamgroup Technicals </p>
+
+</header>
+
+
+
+<div class="chat-container">
+
+<div id="chat-messages" class="chat-messages">
+
+<div class="message assistant-message">
+
+<p>
+
+Hello! you have reached KAM's AI KAMGPT. How can
+
+I help you today?
+
+</p>
+
+</div>
+
+</div>
+
+
+
+<div class="typing-indicator" id="typing-indicator">
+
+AI is thinking...
+
+</div>
+
+
+
+<div class="message-input">
+
+<textarea
+
+id="user-input"
+
+placeholder="Type your message here..."
+
+rows="1"
+
+autofocus
+
+></textarea>
+
+<button id="send-button">Send</button>
+
+</div>
+
+</div>
+
+
+
+<footer>
+
+<p>Kamgroup holdings &copy; 2025</p>
+
+</footer>
+
+
+
+<!-- Chat app script -->
+
+<script src="chat.js"></script>
+
+</body>
+
 </html>
