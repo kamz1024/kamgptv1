@@ -23,9 +23,7 @@
 			}
 
 			body {
-				font-family:
-					-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
-					Cantarell, sans-serif;
+				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 				line-height: 1.6;
 				color: var(--text-color);
 				max-width: 800px;
@@ -53,6 +51,7 @@
 				border: 1px solid var(--border-color);
 				border-radius: 8px;
 				overflow: hidden;
+				position: relative;
 			}
 
 			.chat-messages {
@@ -67,6 +66,14 @@
 				padding: 0.75rem;
 				border-radius: 8px;
 				max-width: 80%;
+				word-wrap: break-word;
+			}
+
+			.message img {
+				max-width: 100%;
+				border-radius: 6px;
+				margin-bottom: 0.5rem;
+				display: block;
 			}
 
 			.user-message {
@@ -80,11 +87,53 @@
 				align-self: flex-start;
 			}
 
+			/* Input Area Styling */
+			.input-wrapper {
+				background: white;
+				border-top: 1px solid var(--border-color);
+				padding: 0.75rem;
+			}
+
+			/* Image Preview Styling */
+			#image-preview-container {
+				display: none;
+				padding-bottom: 0.5rem;
+				border-bottom: 1px solid #eee;
+				margin-bottom: 0.5rem;
+			}
+			
+			.preview-box {
+				display: inline-block;
+				position: relative;
+			}
+
+			.preview-box img {
+				height: 60px;
+				border-radius: 4px;
+				border: 1px solid #ddd;
+			}
+
+			.remove-img-btn {
+				position: absolute;
+				top: -5px;
+				right: -5px;
+				background: red;
+				color: white;
+				border: none;
+				border-radius: 50%;
+				width: 18px;
+				height: 18px;
+				font-size: 12px;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
 			.message-input {
 				display: flex;
-				padding: 0.75rem;
-				border-top: 1px solid var(--border-color);
-				background-color: white;
+				gap: 0.5rem;
+				align-items: flex-end;
 			}
 
 			#user-input {
@@ -95,17 +144,38 @@
 				font-family: inherit;
 				resize: none;
 				min-height: 44px;
+				max-height: 120px;
 			}
 
-			#send-button {
-				margin-left: 0.5rem;
+			/* Buttons */
+			.btn {
+				height: 44px;
 				padding: 0 1rem;
-				background-color: var(--primary-color);
-				color: white;
 				border: none;
 				border-radius: 4px;
 				cursor: pointer;
 				transition: background-color 0.2s;
+				font-weight: 500;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			#attach-button {
+				background-color: #f3f4f6;
+				color: #555;
+				width: 44px;
+				padding: 0;
+				font-size: 1.2rem;
+			}
+
+			#attach-button:hover {
+				background-color: #e5e7eb;
+			}
+
+			#send-button {
+				background-color: var(--primary-color);
+				color: white;
 			}
 
 			#send-button:hover {
@@ -122,6 +192,7 @@
 				margin-bottom: 1rem;
 				font-style: italic;
 				color: var(--text-light);
+				padding: 0 1rem;
 			}
 
 			.typing-indicator.visible {
@@ -139,16 +210,13 @@
 	<body>
 		<header>
 			<h1>KAMGPT</h1>
-			<p>Powered by Kamgroup Technicals </p>
+			<p>Powered by Kamgroup Technicals</p>
 		</header>
 
 		<div class="chat-container">
 			<div id="chat-messages" class="chat-messages">
 				<div class="message assistant-message">
-					<p>
-						Hello! you have reached KAM's AI KAMGPT. How can
-						I help you today?
-					</p>
+					<p>Hello! You have reached KAM's AI. I can now see images! Upload a photo or ask me anything.</p>
 				</div>
 			</div>
 
@@ -156,14 +224,32 @@
 				AI is thinking...
 			</div>
 
-			<div class="message-input">
-				<textarea
-					id="user-input"
-					placeholder="Type your message here..."
-					rows="1"
-					autofocus
-				></textarea>
-				<button id="send-button">Send</button>
+			<div class="input-wrapper">
+				<!-- Image Preview Container -->
+				<div id="image-preview-container">
+					<div class="preview-box">
+						<img id="image-preview-img" src="" alt="Preview">
+						<button class="remove-img-btn" onclick="clearImage()">×</button>
+					</div>
+				</div>
+
+				<div class="message-input">
+					<!-- Hidden File Input -->
+					<input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleFileSelect()">
+					
+					<!-- Attachment Button -->
+					<button id="attach-button" class="btn" onclick="document.getElementById('file-input').click()" title="Attach Image">
+						📎
+					</button>
+
+					<textarea
+						id="user-input"
+						placeholder="Type your message here..."
+						rows="1"
+						autofocus
+					></textarea>
+					<button id="send-button" class="btn">Send</button>
+				</div>
 			</div>
 		</div>
 
@@ -171,7 +257,113 @@
 			<p>Kamgroup holdings &copy; 2025</p>
 		</footer>
 
-		<!-- Chat app script -->
-		<script src="chat.js"></script>
+		<script>
+			// --- Logic embedded directly to avoid needing chat.js ---
+			const chatMessages = document.getElementById('chat-messages');
+			const userInput = document.getElementById('user-input');
+			const sendButton = document.getElementById('send-button');
+			const typingIndicator = document.getElementById('typing-indicator');
+			const fileInput = document.getElementById('file-input');
+			const imagePreviewContainer = document.getElementById('image-preview-container');
+			const imagePreviewImg = document.getElementById('image-preview-img');
+
+			let currentBase64Image = null;
+			let history = [];
+
+			// Auto-resize textarea
+			userInput.addEventListener('input', function() {
+				this.style.height = 'auto';
+				this.style.height = (this.scrollHeight) + 'px';
+			});
+
+			// Handle File Selection
+			function handleFileSelect() {
+				const file = fileInput.files[0];
+				if (file) {
+					const reader = new FileReader();
+					reader.onload = function(e) {
+						currentBase64Image = e.target.result;
+						imagePreviewImg.src = currentBase64Image;
+						imagePreviewContainer.style.display = 'block';
+					};
+					reader.readAsDataURL(file);
+				}
+			}
+
+			// Clear selected image
+			function clearImage() {
+				fileInput.value = '';
+				currentBase64Image = null;
+				imagePreviewContainer.style.display = 'none';
+			}
+
+			// Add message to UI
+			function addMessage(role, text, imageSrc = null) {
+				const messageDiv = document.createElement('div');
+				messageDiv.className = `message ${role}-message`;
+				
+				let content = '';
+				if (imageSrc) {
+					content += `<img src="${imageSrc}" alt="Uploaded image">`;
+				}
+				content += `<p>${text}</p>`;
+				
+				messageDiv.innerHTML = content;
+				chatMessages.appendChild(messageDiv);
+				chatMessages.scrollTop = chatMessages.scrollHeight;
+			}
+
+			// Send Message Logic
+			async function sendMessage() {
+				const text = userInput.value.trim();
+				const imageToSend = currentBase64Image;
+
+				if (!text && !imageToSend) return;
+
+				// UI Updates
+				addMessage('user', text, imageToSend);
+				userInput.value = '';
+				userInput.style.height = 'auto';
+				clearImage(); // Clear preview
+				
+				sendButton.disabled = true;
+				typingIndicator.classList.add('visible');
+
+				try {
+					const response = await fetch('/api/chat', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ 
+							prompt: text,
+							image: imageToSend, // Send Base64 image
+							history: history 
+						})
+					});
+
+					const data = await response.json();
+					
+					typingIndicator.classList.remove('visible');
+					addMessage('assistant', data.response);
+
+					// Keep simple history
+					history.push({ role: 'user', content: text });
+					history.push({ role: 'assistant', content: data.response });
+
+				} catch (error) {
+					typingIndicator.classList.remove('visible');
+					addMessage('assistant', "Error: " + error.message);
+				}
+
+				sendButton.disabled = false;
+			}
+
+			sendButton.addEventListener('click', sendMessage);
+			userInput.addEventListener('keypress', (e) => {
+				if (e.key === 'Enter' && !e.shiftKey) {
+					e.preventDefault();
+					sendMessage();
+				}
+			});
+		</script>
 	</body>
 </html>
