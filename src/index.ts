@@ -72,6 +72,7 @@ async function handleChatRequest(
 			{
 				messages,
 				max_tokens: 1024,
+				stream: true,
 			},
 			{
 				returnRawResponse: true,
@@ -85,7 +86,15 @@ async function handleChatRequest(
 		);
 
 		// Return streaming response
-		return response;
+		const headers = new Headers(response.headers);
+		headers.set("content-type", "text/event-stream; charset=utf-8");
+		headers.set("cache-control", "no-cache");
+
+		return new Response(response.body, {
+			status: response.status,
+			statusText: response.statusText,
+			headers,
+		});
 	} catch (error) {
 		console.error("Error processing chat request:", error);
 		return new Response(

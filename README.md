@@ -13,17 +13,19 @@ This template demonstrates how to build an AI-powered chat interface using Cloud
 - Real-time streaming of AI responses using Server-Sent Events (SSE)
 - Easy customization of models and system prompts
 - Support for AI Gateway integration
-- Clean, responsive UI that works on mobile and desktop
+- Polished, responsive UI that works on mobile and desktop
+- Text-file attachment support for asking questions about small documents
 
 ## Features
 
-- 💬 Simple and responsive chat interface
+- 💬 Polished, responsive chat interface
 - ⚡ Server-Sent Events (SSE) for streaming responses
 - 🧠 Powered by Cloudflare Workers AI LLMs
 - 🛠️ Built with TypeScript and Cloudflare Workers
 - 📱 Mobile-friendly design
 - 🔄 Maintains chat history on the client
 - 🔎 Built-in Observability logging
+- 📎 Attach small text-based files directly from the composer
 <!-- dash-content-end -->
 
 ## Getting Started
@@ -74,6 +76,16 @@ Deploy to Cloudflare Workers:
 npm run deploy
 ```
 
+### Browser-only GitHub deployment
+
+If you are working entirely from the GitHub website, merge or edit the files on your production branch and then connect the repository from the Cloudflare dashboard. Use the repository root as the project root, keep the Worker name aligned with `wrangler.jsonc`, and deploy with the existing `npm run deploy` script.
+
+After deployment, test the generated `workers.dev` URL instead of opening `public/index.html` directly or using GitHub Pages. The chat UI depends on the Worker route at `/api/chat` and the Workers AI binding, so static hosting alone will not return assistant responses.
+
+### Troubleshooting missing responses
+
+If user messages appear but assistant responses do not, check the browser Network tab for the `/api/chat` request. A working response should return HTTP 200 with a `text/event-stream` response from the Worker. If you see a 404, the app is not being served by the Worker. If you see a 500, open the Worker logs in Cloudflare and confirm the Workers AI binding named `AI` is enabled for the deployed Worker.
+
 ### Monitor
 
 View real-time logs associated with any deployed Worker:
@@ -88,7 +100,8 @@ npm wrangler tail
 /
 ├── public/             # Static assets
 │   ├── index.html      # Chat UI HTML
-│   └── chat.js         # Chat UI frontend script
+│   ├── chat.js         # Stable frontend entrypoint
+│   └── kamgpt-chat.js  # Enhanced KAMGPT frontend implementation
 ├── src/
 │   ├── index.ts        # Main Worker entry point
 │   └── types.ts        # TypeScript type definitions
@@ -112,10 +125,11 @@ The backend is built with Cloudflare Workers and uses the Workers AI platform to
 
 The frontend is a simple HTML/CSS/JavaScript application that:
 
-1. Presents a chat interface
-2. Sends user messages to the API
-3. Processes streaming responses in real-time
-4. Maintains chat history on the client side
+1. Presents a polished chat interface with suggested prompts
+2. Supports small text-based file attachments from the composer or drag-and-drop
+3. Sends user messages and readable attachment contents to the API
+4. Processes streaming responses in real-time
+5. Maintains chat history on the client side
 
 ## Customization
 
@@ -144,7 +158,11 @@ The default system prompt can be changed by updating the `SYSTEM_PROMPT` constan
 
 ### Styling
 
-The UI styling is contained in the `<style>` section of `public/index.html`. You can modify the CSS variables at the top to quickly change the color scheme.
+The UI styling is contained in the `<style>` section of `public/index.html`. You can modify the CSS variables at the top to quickly change the color scheme. The page keeps the stable `public/chat.js` entrypoint, which loads the enhanced `public/kamgpt-chat.js` implementation for easier conflict-free merges.
+
+### Attachments
+
+The frontend supports up to five small text-based attachments per message. Supported files are read in the browser and added to the chat prompt as text, so binary files, large documents, and image understanding require a dedicated upload/conversion flow before the model can reason about them.
 
 ## Resources
 
