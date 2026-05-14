@@ -100,7 +100,8 @@ npm wrangler tail
 /
 ├── public/             # Static assets
 │   ├── index.html      # Chat UI HTML
-│   └── chat.js         # Chat UI frontend script
+│   ├── chat.js         # Original template frontend script
+│   └── kamgpt-chat.js  # Enhanced KAMGPT frontend script
 ├── src/
 │   ├── index.ts        # Main Worker entry point
 │   └── types.ts        # TypeScript type definitions
@@ -157,7 +158,7 @@ The default system prompt can be changed by updating the `SYSTEM_PROMPT` constan
 
 ### Styling
 
-The UI styling is contained in the `<style>` section of `public/index.html`. You can modify the CSS variables at the top to quickly change the color scheme.
+The UI styling is contained in the `<style>` section of `public/index.html`. You can modify the CSS variables at the top to quickly change the color scheme. The enhanced interface loads `public/kamgpt-chat.js`, leaving the original template `public/chat.js` available for easier conflict-free merges.
 
 ### Attachments
 
