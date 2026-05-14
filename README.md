@@ -164,6 +164,10 @@ The UI styling is contained in the `<style>` section of `public/index.html`. You
 
 The frontend supports up to five small text-based attachments per message. Supported files are read in the browser and added to the chat prompt as text, so binary files, large documents, and image understanding require a dedicated upload/conversion flow before the model can reason about them.
 
+### Attachments
+
+The frontend supports up to five small text-based attachments per message. Supported files are read in the browser and added to the chat prompt as text, so binary files, large documents, and image understanding require a dedicated upload/conversion flow before the model can reason about them.
+
 ## Resources
 
 - [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
