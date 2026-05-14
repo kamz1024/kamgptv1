@@ -13,17 +13,19 @@ This template demonstrates how to build an AI-powered chat interface using Cloud
 - Real-time streaming of AI responses using Server-Sent Events (SSE)
 - Easy customization of models and system prompts
 - Support for AI Gateway integration
-- Clean, responsive UI that works on mobile and desktop
+- Polished, responsive UI that works on mobile and desktop
+- Text-file attachment support for asking questions about small documents
 
 ## Features
 
-- 💬 Simple and responsive chat interface
+- 💬 Polished, responsive chat interface
 - ⚡ Server-Sent Events (SSE) for streaming responses
 - 🧠 Powered by Cloudflare Workers AI LLMs
 - 🛠️ Built with TypeScript and Cloudflare Workers
 - 📱 Mobile-friendly design
 - 🔄 Maintains chat history on the client
 - 🔎 Built-in Observability logging
+- 📎 Attach small text-based files directly from the composer
 <!-- dash-content-end -->
 
 ## Getting Started
@@ -112,10 +114,11 @@ The backend is built with Cloudflare Workers and uses the Workers AI platform to
 
 The frontend is a simple HTML/CSS/JavaScript application that:
 
-1. Presents a chat interface
-2. Sends user messages to the API
-3. Processes streaming responses in real-time
-4. Maintains chat history on the client side
+1. Presents a polished chat interface with suggested prompts
+2. Supports small text-based file attachments from the composer or drag-and-drop
+3. Sends user messages and readable attachment contents to the API
+4. Processes streaming responses in real-time
+5. Maintains chat history on the client side
 
 ## Customization
 
@@ -145,6 +148,10 @@ The default system prompt can be changed by updating the `SYSTEM_PROMPT` constan
 ### Styling
 
 The UI styling is contained in the `<style>` section of `public/index.html`. You can modify the CSS variables at the top to quickly change the color scheme.
+
+### Attachments
+
+The frontend supports up to five small text-based attachments per message. Supported files are read in the browser and added to the chat prompt as text, so binary files, large documents, and image understanding require a dedicated upload/conversion flow before the model can reason about them.
 
 ## Resources
 
