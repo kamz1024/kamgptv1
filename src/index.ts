@@ -167,23 +167,41 @@ async function handleChatRequest(
 			? prepareVisionMessages(messages)
 			: messages;
 
-		const response = await env.AI.run(
-			modelId,
-			{
-				messages: modelMessages,
-				max_tokens: 1024,
-				stream: true,
-			},
-			{
-				returnRawResponse: true,
-				// Uncomment to use AI Gateway
-				// gateway: {
-				//   id: "YOUR_GATEWAY_ID", // Replace with your AI Gateway ID
-				//   skipCache: false,      // Set to true to bypass cache
-				//   cacheTtl: 3600,        // Cache time-to-live in seconds
-				// },
-			},
-		);
+		const runModel = () =>
+			env.AI.run(
+				modelId,
+				{
+					messages: modelMessages,
+					max_tokens: 1024,
+					stream: true,
+				},
+				{
+					returnRawResponse: true,
+					// Uncomment to use AI Gateway
+					// gateway: {
+					//   id: "YOUR_GATEWAY_ID", // Replace with your AI Gateway ID
+					//   skipCache: false,      // Set to true to bypass cache
+					//   cacheTtl: 3600,        // Cache time-to-live in seconds
+					// },
+				},
+			);
+
+		let response = await runModel();
+
+		// The vision model is gated behind Meta's license: it returns 403
+		// until the account sends a one-time { prompt: "agree" } request.
+		// Accept it on first use, then retry the original request.
+		if (hasImage && response.status === 403) {
+			console.warn(
+				"Vision model returned 403; accepting Meta license and retrying.",
+			);
+			try {
+				await env.AI.run(VISION_MODEL_ID, { prompt: "agree" });
+			} catch (agreeError) {
+				console.error("License agreement request failed:", agreeError);
+			}
+			response = await runModel();
+		}
 
 		// If the model call failed, surface its error as JSON so the client
 		// can show something more useful than a generic failure.
