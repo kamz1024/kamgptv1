@@ -165,7 +165,7 @@ The UI styling is contained in the `<style>` section of `public/index.html`. You
 The frontend supports up to six attachments per message, across four kinds:
 
 - **Text and code files** (`.txt`, `.md`, `.json`, `.py`, `.ts`, etc.) are read in the browser and inlined into the prompt as text, up to 750 KB each.
-- **Images** (`.png`, `.jpg`, `.webp`, `.gif`, etc., up to 5 MB each) are sent as an `image_url` content part. When a message includes an image, the backend automatically routes the request to the vision-capable model (`VISION_MODEL_ID`) instead of the default text model.
+- **Images** (`.png`, `.jpg`, `.webp`, `.gif`, etc., up to 5 MB each) are downscaled in the browser (max 1120px, re-encoded as JPEG) and sent as an `image_url` content part. When a message includes an image, the backend automatically routes the request to the vision-capable model (`VISION_MODEL_ID`) and reshapes the conversation for it — the vision model rejects system-role messages alongside images and only handles a single image reliably, so the persona is folded into the first user turn and only the most recent image is kept.
 - **Audio clips** (`.mp3`, `.wav`, `.m4a`, etc., up to 8 MB each) are transcribed server-side via `/api/transcribe` (using `TRANSCRIPTION_MODEL_ID`), and the transcript is folded into the prompt as text.
 - **Documents** (`.pdf`, `.docx`, `.xlsx`, `.pptx`, `.zip`, etc., up to 5 MB each) are accepted, but their contents aren't extracted yet — only the filename and metadata are shared with the model, so ask the user to paste key excerpts if the content matters.
 
