@@ -45,13 +45,9 @@ const ATTACHMENT_ICONS = {
 	document: "📁",
 };
 
-// Chat state
-let chatHistory = [
-	{
-		role: "assistant",
-		content: "Hello! You have reached Kam's AI KAMGPT. How can I help you today?",
-	},
-];
+// Chat state. The welcome copy lives in the hero empty state, so the
+// history starts empty and the backend adds the system prompt.
+let chatHistory = [];
 let selectedAttachments = [];
 let isProcessing = false;
 let dragDepth = 0;
@@ -84,7 +80,7 @@ fileInput.addEventListener("change", function () {
 emptyPrompts.addEventListener("click", function (event) {
 	const promptButton = event.target.closest(".prompt-chip");
 	if (!promptButton) return;
-	userInput.value = promptButton.textContent.trim();
+	userInput.value = promptButton.dataset.prompt || promptButton.textContent.trim();
 	resizeInput();
 	userInput.focus();
 });
@@ -273,6 +269,7 @@ async function sendMessage() {
 
 		const assistantMessageEl = addMessageToChat("assistant", "");
 		assistantBubble = assistantMessageEl.querySelector(".message-text");
+		assistantBubble.classList.add("streaming");
 
 		const response = await fetch("/api/chat", {
 			method: "POST",
@@ -334,6 +331,9 @@ async function sendMessage() {
 			addMessageToChat("assistant", errorMessage);
 		}
 	} finally {
+		if (assistantBubble) {
+			assistantBubble.classList.remove("streaming");
+		}
 		typingIndicator.classList.remove("visible");
 		isProcessing = false;
 		setInputState(true);
