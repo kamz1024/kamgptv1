@@ -7,7 +7,7 @@
  *
  * @license MIT
  */
-import { Env, ChatMessage } from "./types";
+import { Env, ChatMessage, ChatMessageContentPart } from "./types";
 
 // Model IDs for Workers AI models
 // https://developers.cloudflare.com/workers-ai/models/
@@ -32,6 +32,73 @@ function conversationHasImage(messages: ChatMessage[]): boolean {
 			Array.isArray(message.content) &&
 			message.content.some((part) => part.type === "image_url"),
 	);
+}
+
+/**
+ * Rewrites the conversation into the shape the Llama 3.2 vision model
+ * accepts: no system-role message may accompany an image, and the model is
+ * only reliable with a single image, so the persona is folded into the
+ * first user turn, only the most recent image is kept, and every other
+ * message is flattened to plain text.
+ */
+function prepareVisionMessages(messages: ChatMessage[]): ChatMessage[] {
+	const lastImageIndex = messages.reduce(
+		(last, message, index) =>
+			Array.isArray(message.content) &&
+			message.content.some((part) => part.type === "image_url")
+				? index
+				: last,
+		-1,
+	);
+
+	const prepared: ChatMessage[] = [];
+	for (let i = 0; i < messages.length; i++) {
+		const message = messages[i];
+		if (message.role === "system") {
+			continue;
+		}
+
+		if (!Array.isArray(message.content)) {
+			prepared.push({ role: message.role, content: message.content });
+			continue;
+		}
+
+		const text = message.content
+			.filter((part) => part.type === "text")
+			.map((part) => part.text || "")
+			.join("\n")
+			.trim();
+
+		if (i === lastImageIndex) {
+			const image = message.content.find((part) => part.type === "image_url");
+			prepared.push({
+				role: message.role,
+				content: [
+					{ type: "text", text: text || "Describe this image." },
+					image as ChatMessageContentPart,
+				],
+			});
+		} else {
+			prepared.push({
+				role: message.role,
+				content: text || "[attachment omitted]",
+			});
+		}
+	}
+
+	const firstUser = prepared.find((message) => message.role === "user");
+	if (firstUser) {
+		if (typeof firstUser.content === "string") {
+			firstUser.content = `${SYSTEM_PROMPT}\n\n${firstUser.content}`;
+		} else {
+			const textPart = firstUser.content.find((part) => part.type === "text");
+			if (textPart) {
+				textPart.text = `${SYSTEM_PROMPT}\n\n${textPart.text ?? ""}`;
+			}
+		}
+	}
+
+	return prepared;
 }
 
 export default {
@@ -92,13 +159,18 @@ async function handleChatRequest(
 			messages.unshift({ role: "system", content: SYSTEM_PROMPT });
 		}
 
-		// Messages that include an attached image need the vision-capable model.
-		const modelId = conversationHasImage(messages) ? VISION_MODEL_ID : MODEL_ID;
+		// Messages that include an attached image need the vision-capable
+		// model, which also needs the conversation reshaped to fit its rules.
+		const hasImage = conversationHasImage(messages);
+		const modelId = hasImage ? VISION_MODEL_ID : MODEL_ID;
+		const modelMessages = hasImage
+			? prepareVisionMessages(messages)
+			: messages;
 
 		const response = await env.AI.run(
 			modelId,
 			{
-				messages,
+				messages: modelMessages,
 				max_tokens: 1024,
 				stream: true,
 			},
@@ -112,6 +184,22 @@ async function handleChatRequest(
 				// },
 			},
 		);
+
+		// If the model call failed, surface its error as JSON so the client
+		// can show something more useful than a generic failure.
+		if (!response.ok) {
+			const detail = await response.text();
+			console.error("Workers AI error:", response.status, detail);
+			return new Response(
+				JSON.stringify({
+					error: `The model returned an error (status ${response.status}).`,
+				}),
+				{
+					status: 502,
+					headers: { "content-type": "application/json" },
+				},
+			);
+		}
 
 		// Return streaming response
 		const headers = new Headers(response.headers);

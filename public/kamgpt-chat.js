@@ -282,7 +282,11 @@ async function sendMessage() {
 		});
 
 		if (!response.ok) {
-			throw new Error("Failed to get response");
+			const errorDetail = await response
+				.json()
+				.then((data) => data?.error)
+				.catch(() => null);
+			throw new Error(errorDetail || "Failed to get response");
 		}
 
 		if (!response.body) {
@@ -324,7 +328,9 @@ async function sendMessage() {
 		chatHistory.push({ role: "assistant", content: responseText });
 	} catch (error) {
 		console.error("Error:", error);
-		const errorMessage = "Sorry, there was an error processing your request.";
+		const errorMessage = error?.message && error.message !== "Failed to get response"
+			? `Sorry, something went wrong: ${error.message}`
+			: "Sorry, there was an error processing your request.";
 		if (assistantBubble) {
 			assistantBubble.textContent = errorMessage;
 		} else {
@@ -408,7 +414,7 @@ async function buildMessageForApi(message, attachments) {
 				`Attachment: ${attachment.file.name} (${attachment.file.type || "document"}, ${formatBytes(attachment.file.size)}) — this file type can't be read automatically yet. Ask the user to paste the relevant text if you need its contents.`,
 			);
 		} else if (attachment.kind === "image") {
-			const dataUrl = await readFileAsDataUrl(attachment.file);
+			const dataUrl = await imageFileToDataUrl(attachment.file);
 			imageParts.push({ type: "image_url", image_url: { url: dataUrl } });
 		}
 	}
@@ -458,6 +464,37 @@ function readFileAsDataUrl(file) {
 		reader.onerror = () => reject(reader.error);
 		reader.readAsDataURL(file);
 	});
+}
+
+// The vision model works best with images at or below ~1120px, and huge
+// base64 payloads are a common cause of model errors, so images are
+// downscaled and re-encoded as JPEG before being sent.
+const MAX_IMAGE_DIMENSION = 1120;
+
+async function imageFileToDataUrl(file) {
+	try {
+		const bitmap = await createImageBitmap(file);
+		const scale = Math.min(
+			1,
+			MAX_IMAGE_DIMENSION / Math.max(bitmap.width, bitmap.height),
+		);
+		const canvas = document.createElement("canvas");
+		canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+		canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+
+		const context = canvas.getContext("2d");
+		context.fillStyle = "#fff";
+		context.fillRect(0, 0, canvas.width, canvas.height);
+		context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+		bitmap.close();
+
+		return canvas.toDataURL("image/jpeg", 0.85);
+	} catch (error) {
+		// Some formats (e.g. SVG in certain browsers) can't be decoded to a
+		// bitmap; fall back to sending the original file.
+		console.warn("Could not downscale image, sending original:", error);
+		return readFileAsDataUrl(file);
+	}
 }
 
 function setInputState(enabled) {
