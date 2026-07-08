@@ -15,9 +15,20 @@ export interface Env {
 }
 
 /**
+ * A single piece of message content. Text-only messages can use a plain
+ * string; messages that include an image (for the vision model) use an
+ * array of parts instead.
+ */
+export interface ChatMessageContentPart {
+	type: "text" | "image_url";
+	text?: string;
+	image_url?: { url: string };
+}
+
+/**
  * Represents a chat message.
  */
 export interface ChatMessage {
 	role: "system" | "user" | "assistant";
-	content: string;
+	content: string | ChatMessageContentPart[];
 }

@@ -3,21 +3,42 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>KAM GPT</title>
+<title>KAMGPT — Kam's personal AI</title>
+<link
+	rel="icon"
+	type="image/svg+xml"
+	href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23ff9f45'/%3E%3Cstop offset='0.55' stop-color='%23f6821f'/%3E%3Cstop offset='1' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='18' fill='%23090b10'/%3E%3Crect x='4' y='4' width='56' height='56' rx='15' fill='url(%23g)'/%3E%3Ctext x='32' y='42' font-family='Arial, sans-serif' font-weight='900' font-size='28' fill='%23140b04' text-anchor='middle'%3EKG%3C/text%3E%3C/svg%3E"
+/>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+	href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+	rel="stylesheet"
+/>
 <style>
+@property --ring-angle {
+	syntax: "<angle>";
+	initial-value: 0deg;
+	inherits: false;
+}
+
 :root {
 	--primary-color: #f6821f;
 	--primary-hover: #ff9f45;
-	--bg-color: #090b10;
-	--panel-bg: rgba(16, 20, 30, 0.86);
-	--panel-border: rgba(255, 255, 255, 0.12);
-	--composer-bg: rgba(255, 255, 255, 0.08);
-	--text-color: #f8fafc;
-	--text-muted: #a6adbb;
-	--user-msg-bg: linear-gradient(135deg, #f6821f, #ffb35f);
-	--assistant-msg-bg: rgba(255, 255, 255, 0.09);
+	--accent-color: #8b5cf6;
+	--accent-cool: #38bdf8;
+	--bg-color: #08090e;
+	--panel-bg: rgba(15, 17, 26, 0.66);
+	--panel-border: rgba(255, 255, 255, 0.09);
+	--composer-bg: rgba(255, 255, 255, 0.05);
+	--text-color: #f7f8fb;
+	--text-muted: #99a2b4;
+	--user-msg-bg: linear-gradient(135deg, #f6821f, #ff9f45);
+	--assistant-msg-bg: rgba(255, 255, 255, 0.055);
 	--danger-color: #ff6b6b;
-	--shadow-lg: 0 24px 80px rgba(0, 0, 0, 0.35);
+	--shadow-lg: 0 32px 90px rgba(0, 0, 0, 0.5);
+	--radius-lg: 26px;
+	--font-display: "Space Grotesk", Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
 * {
@@ -26,17 +47,54 @@
 	padding: 0;
 }
 
+html {
+	color-scheme: dark;
+}
+
 body {
+	position: relative;
 	min-height: 100vh;
 	font-family:
 		Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
 		Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-	line-height: 1.5;
+	line-height: 1.55;
 	color: var(--text-color);
+	background: var(--bg-color);
+	overflow-x: hidden;
+}
+
+body::before {
+	content: "";
+	position: fixed;
+	inset: -12%;
+	z-index: -2;
 	background:
-		radial-gradient(circle at top left, rgba(246, 130, 31, 0.3), transparent 34rem),
-		radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.2), transparent 30rem),
+		radial-gradient(42rem 36rem at 10% 0%, rgba(246, 130, 31, 0.28), transparent 62%),
+		radial-gradient(36rem 32rem at 92% 22%, rgba(139, 92, 246, 0.24), transparent 60%),
+		radial-gradient(44rem 38rem at 45% 110%, rgba(56, 189, 248, 0.14), transparent 62%),
 		var(--bg-color);
+	animation: mesh-drift 26s ease-in-out infinite alternate;
+}
+
+body::after {
+	content: "";
+	position: fixed;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
+	background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+	background-size: 28px 28px;
+	mask-image: radial-gradient(circle at 50% 12%, black, transparent 78%);
+	opacity: 0.45;
+}
+
+@keyframes mesh-drift {
+	0% {
+		transform: translate3d(0, 0, 0) scale(1);
+	}
+	100% {
+		transform: translate3d(-2.5%, 2%, 0) scale(1.07);
+	}
 }
 
 button,
@@ -46,13 +104,32 @@ textarea {
 
 button {
 	border: 0;
+	font-family: inherit;
+}
+
+::selection {
+	background: rgba(246, 130, 31, 0.35);
+}
+
+*::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.15);
+	border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+	background: rgba(255, 255, 255, 0.28);
 }
 
 .app-shell {
 	display: flex;
 	flex-direction: column;
 	min-height: 100vh;
-	padding: 1rem;
+	padding: 1.25rem;
 }
 
 .site-header {
@@ -60,56 +137,117 @@ button {
 	align-items: center;
 	justify-content: space-between;
 	gap: 1rem;
-	width: min(1100px, 100%);
-	margin: 0 auto 1rem;
-	padding: 0.9rem 1rem;
+	width: min(1080px, 100%);
+	margin: 0 auto 1.1rem;
+	padding: 0.8rem 1.1rem;
 	border: 1px solid var(--panel-border);
-	border-radius: 24px;
-	background: rgba(9, 11, 16, 0.68);
-	box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18);
-	backdrop-filter: blur(18px);
+	border-radius: 999px;
+	background: rgba(10, 12, 18, 0.55);
+	box-shadow: 0 14px 44px rgba(0, 0, 0, 0.28);
+	backdrop-filter: blur(20px) saturate(150%);
 }
 
 .brand {
 	display: flex;
 	align-items: center;
-	gap: 0.8rem;
+	gap: 0.9rem;
 }
 
 .brand-mark {
+	position: relative;
 	display: grid;
 	place-items: center;
-	width: 44px;
-	height: 44px;
-	border-radius: 16px;
-	background: var(--user-msg-bg);
-	box-shadow: 0 10px 28px rgba(246, 130, 31, 0.3);
-	font-weight: 900;
-	letter-spacing: -0.05em;
+	width: 46px;
+	height: 46px;
+	border-radius: 15px;
+	background: linear-gradient(135deg, #ffb35f, #f6821f 52%, #8b5cf6);
+	box-shadow:
+		0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+		0 12px 30px rgba(246, 130, 31, 0.42);
+	font-family: var(--font-display);
+	font-weight: 700;
+	font-size: 1rem;
+	letter-spacing: -0.03em;
+	color: #170d03;
+	overflow: hidden;
+	isolation: isolate;
+}
+
+.brand-mark::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	background: linear-gradient(
+		115deg,
+		transparent 32%,
+		rgba(255, 255, 255, 0.55) 48%,
+		transparent 62%
+	);
+	transform: translateX(-120%);
+	animation: logo-shine 5s ease-in-out infinite;
+	pointer-events: none;
+}
+
+@keyframes logo-shine {
+	0%, 70% {
+		transform: translateX(-120%);
+	}
+	85%, 100% {
+		transform: translateX(120%);
+	}
+}
+
+.brand-ring {
+	position: relative;
+	display: grid;
+	place-items: center;
+	padding: 3px;
+	border-radius: 18px;
+	background: conic-gradient(
+		from var(--ring-angle),
+		#f6821f,
+		#8b5cf6 35%,
+		#38bdf8 60%,
+		#ffb35f 82%,
+		#f6821f
+	);
+	animation: ring-spin 6s linear infinite;
+}
+
+@keyframes ring-spin {
+	to {
+		--ring-angle: 360deg;
+	}
 }
 
 .brand h1 {
-	font-size: clamp(1.2rem, 3vw, 1.75rem);
+	font-family: var(--font-display);
+	font-size: clamp(1.3rem, 3vw, 1.8rem);
 	line-height: 1;
-	letter-spacing: -0.04em;
+	letter-spacing: -0.02em;
+	background: linear-gradient(95deg, #fff 5%, #ffd8a8 40%, #f6821f 68%, #c084fc 100%);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
 }
 
 .brand p {
-	margin-top: 0.2rem;
-	font-size: 0.85rem;
+	margin-top: 0.25rem;
+	font-size: 0.83rem;
 	color: var(--text-muted);
 }
 
 .status-pill {
 	display: inline-flex;
 	align-items: center;
-	gap: 0.45rem;
-	padding: 0.45rem 0.7rem;
-	border: 1px solid rgba(255, 255, 255, 0.14);
+	gap: 0.5rem;
+	padding: 0.5rem 0.9rem;
+	border: 1px solid rgba(132, 204, 22, 0.25);
 	border-radius: 999px;
-	background: rgba(255, 255, 255, 0.07);
+	background: rgba(132, 204, 22, 0.08);
 	color: #d9f99d;
-	font-size: 0.85rem;
+	font-size: 0.84rem;
 	white-space: nowrap;
 }
 
@@ -118,71 +256,208 @@ button {
 	height: 0.55rem;
 	border-radius: 50%;
 	background: #84cc16;
-	box-shadow: 0 0 0 6px rgba(132, 204, 22, 0.12);
+	box-shadow: 0 0 0 6px rgba(132, 204, 22, 0.14);
+	animation: status-blink 2.4s ease-in-out infinite;
+}
+
+@keyframes status-blink {
+	0%, 100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.45;
+	}
 }
 
 .chat-container {
 	display: flex;
 	flex: 1;
 	flex-direction: column;
-	width: min(1100px, 100%);
+	width: min(1080px, 100%);
 	min-height: 0;
 	margin: 0 auto;
-	border: 1px solid var(--panel-border);
-	border-radius: 28px;
+	border: 1px solid transparent;
+	border-radius: var(--radius-lg);
 	overflow: hidden;
-	background: var(--panel-bg);
+	background:
+		linear-gradient(var(--panel-bg), var(--panel-bg)) padding-box,
+		linear-gradient(140deg, rgba(246, 130, 31, 0.4), rgba(255, 255, 255, 0.08) 30%, rgba(139, 92, 246, 0.3)) border-box;
 	box-shadow: var(--shadow-lg);
-	backdrop-filter: blur(22px);
+	backdrop-filter: blur(24px) saturate(150%);
 }
 
 .chat-messages {
 	display: flex;
 	flex: 1;
 	flex-direction: column;
-	gap: 1rem;
+	gap: 1.1rem;
 	overflow-y: auto;
-	padding: clamp(1rem, 3vw, 2rem);
+	padding: clamp(1rem, 3vw, 2.1rem);
 	scroll-behavior: smooth;
+}
+
+.hero {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 1rem;
+	margin: auto 0;
+	padding: clamp(1rem, 4vw, 2.5rem) 0;
+	text-align: center;
+}
+
+.hero-eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	padding: 0.4rem 0.85rem;
+	border: 1px solid rgba(246, 130, 31, 0.35);
+	border-radius: 999px;
+	background: rgba(246, 130, 31, 0.1);
+	color: #ffd8a8;
+	font-size: 0.78rem;
+	font-weight: 600;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+
+.hero h2 {
+	font-family: var(--font-display);
+	font-size: clamp(1.9rem, 5.5vw, 3.1rem);
+	line-height: 1.08;
+	letter-spacing: -0.03em;
+	background: linear-gradient(95deg, #fff 15%, #ffd8a8 45%, #f6821f 72%, #c084fc 100%);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+.hero > p {
+	max-width: 34rem;
+	color: var(--text-muted);
+	font-size: clamp(0.95rem, 2vw, 1.05rem);
+}
+
+.empty-prompts {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.8rem;
+	width: min(44rem, 100%);
+	margin-top: 0.6rem;
+}
+
+.prompt-chip {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.9rem 1rem;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 18px;
+	background: rgba(255, 255, 255, 0.045);
+	color: var(--text-color);
+	text-align: left;
+	cursor: pointer;
+	transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.prompt-chip:hover {
+	transform: translateY(-3px);
+	border-color: rgba(246, 130, 31, 0.55);
+	background: rgba(246, 130, 31, 0.1);
+	box-shadow: 0 14px 30px rgba(246, 130, 31, 0.16);
+}
+
+.prompt-icon {
+	display: grid;
+	flex: 0 0 auto;
+	place-items: center;
+	width: 2.2rem;
+	height: 2.2rem;
+	border-radius: 12px;
+	background: rgba(255, 255, 255, 0.07);
+	font-size: 1.05rem;
+}
+
+.prompt-copy strong {
+	display: block;
+	font-size: 0.92rem;
+	font-weight: 600;
+}
+
+.prompt-copy small {
+	display: block;
+	margin-top: 0.1rem;
+	color: var(--text-muted);
+	font-size: 0.78rem;
 }
 
 .message {
 	display: flex;
 	gap: 0.75rem;
 	max-width: min(780px, 92%);
-	animation: message-in 0.18s ease-out;
+	animation: message-in 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes message-in {
 	from {
 		opacity: 0;
-		transform: translateY(6px);
+		transform: translateY(8px) scale(0.98);
 	}
 	to {
 		opacity: 1;
-		transform: translateY(0);
+		transform: translateY(0) scale(1);
 	}
 }
 
 .message-avatar {
 	display: grid;
-	flex: 0 0 36px;
+	flex: 0 0 38px;
 	place-items: center;
-	width: 36px;
-	height: 36px;
+	width: 38px;
+	height: 38px;
 	border-radius: 13px;
-	background: rgba(255, 255, 255, 0.1);
+	background: rgba(255, 255, 255, 0.07);
+	border: 1px solid rgba(255, 255, 255, 0.1);
 	color: var(--text-color);
-	font-size: 0.78rem;
-	font-weight: 800;
+	font-family: var(--font-display);
+	font-size: 0.74rem;
+	font-weight: 700;
+}
+
+.assistant-message .message-avatar {
+	background: linear-gradient(135deg, rgba(246, 130, 31, 0.28), rgba(139, 92, 246, 0.24));
+	border-color: rgba(246, 130, 31, 0.3);
 }
 
 .message-bubble {
-	padding: 0.8rem 0.95rem;
-	border: 1px solid rgba(255, 255, 255, 0.1);
-	border-radius: 18px;
+	padding: 0.85rem 1rem;
+	border: 1px solid rgba(255, 255, 255, 0.09);
+	border-radius: 20px;
+	min-width: 2rem;
+}
+
+.message-text {
 	white-space: pre-wrap;
 	word-break: break-word;
+}
+
+.message-text.streaming::after {
+	content: "";
+	display: inline-block;
+	width: 0.55em;
+	height: 1em;
+	margin-left: 0.15em;
+	vertical-align: text-bottom;
+	border-radius: 2px;
+	background: var(--primary-color);
+	animation: caret-blink 0.9s steps(2, start) infinite;
+}
+
+@keyframes caret-blink {
+	to {
+		visibility: hidden;
+	}
 }
 
 .user-message {
@@ -192,6 +467,7 @@ button {
 
 .user-message .message-avatar {
 	background: var(--user-msg-bg);
+	border-color: transparent;
 	color: #1f1308;
 }
 
@@ -199,56 +475,89 @@ button {
 	border-color: rgba(246, 130, 31, 0.4);
 	background: var(--user-msg-bg);
 	color: #1f1308;
-}
-
-.assistant-message {
-	align-self: flex-start;
+	border-bottom-right-radius: 6px;
 }
 
 .assistant-message .message-bubble {
 	background: var(--assistant-msg-bg);
 	color: var(--text-color);
+	border-bottom-left-radius: 6px;
 }
 
-.empty-prompts {
-	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 0.8rem;
-	margin-top: auto;
+.message-attachments {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	margin-top: 0.6rem;
 }
 
-.prompt-chip {
-	padding: 0.85rem;
-	border: 1px solid rgba(255, 255, 255, 0.12);
-	border-radius: 18px;
-	background: rgba(255, 255, 255, 0.06);
-	color: var(--text-color);
-	text-align: left;
-	cursor: pointer;
-	transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+.message-attachment-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	max-width: 100%;
+	padding: 0.3rem 0.55rem;
+	border-radius: 999px;
+	background: rgba(0, 0, 0, 0.14);
+	font-size: 0.78rem;
 }
 
-.prompt-chip:hover {
-	transform: translateY(-2px);
-	border-color: rgba(246, 130, 31, 0.55);
-	background: rgba(246, 130, 31, 0.12);
+.message-attachment-chip span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 12rem;
 }
 
 .typing-indicator {
 	display: none;
-	padding: 0 2rem 0.5rem;
+	align-items: center;
+	gap: 0.45rem;
+	padding: 0 2rem 0.6rem;
 	color: var(--text-muted);
-	font-size: 0.9rem;
+	font-size: 0.88rem;
 }
 
 .typing-indicator.visible {
-	display: block;
+	display: flex;
+}
+
+.typing-indicator .typing-dots {
+	display: inline-flex;
+	gap: 0.22rem;
+}
+
+.typing-indicator .typing-dots span {
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: var(--primary-color);
+	animation: typing-bounce 1s ease-in-out infinite;
+}
+
+.typing-indicator .typing-dots span:nth-child(2) {
+	animation-delay: 0.15s;
+}
+
+.typing-indicator .typing-dots span:nth-child(3) {
+	animation-delay: 0.3s;
+}
+
+@keyframes typing-bounce {
+	0%, 60%, 100% {
+		transform: translateY(0);
+		opacity: 0.5;
+	}
+	30% {
+		transform: translateY(-4px);
+		opacity: 1;
+	}
 }
 
 .composer {
-	padding: 0.9rem;
+	padding: 0.95rem;
 	border-top: 1px solid var(--panel-border);
-	background: rgba(8, 10, 16, 0.72);
+	background: rgba(8, 9, 15, 0.55);
 }
 
 .attachment-tray {
@@ -267,10 +576,10 @@ button {
 	align-items: center;
 	gap: 0.5rem;
 	max-width: 100%;
-	padding: 0.45rem 0.55rem;
+	padding: 0.4rem 0.55rem;
 	border: 1px solid rgba(255, 255, 255, 0.12);
 	border-radius: 999px;
-	background: rgba(255, 255, 255, 0.08);
+	background: rgba(255, 255, 255, 0.07);
 	color: var(--text-color);
 	font-size: 0.85rem;
 }
@@ -279,10 +588,20 @@ button {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	max-width: 14rem;
+}
+
+.attachment-thumb {
+	width: 1.6rem;
+	height: 1.6rem;
+	border-radius: 8px;
+	object-fit: cover;
+	flex: 0 0 auto;
 }
 
 .remove-attachment {
 	display: grid;
+	flex: 0 0 auto;
 	place-items: center;
 	width: 1.4rem;
 	height: 1.4rem;
@@ -302,9 +621,15 @@ button {
 	align-items: flex-end;
 	gap: 0.65rem;
 	padding: 0.55rem;
-	border: 1px solid rgba(255, 255, 255, 0.14);
-	border-radius: 24px;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	border-radius: 26px;
 	background: var(--composer-bg);
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.composer-row:focus-within {
+	border-color: rgba(246, 130, 31, 0.55);
+	box-shadow: 0 0 0 4px rgba(246, 130, 31, 0.12), 0 12px 34px rgba(246, 130, 31, 0.1);
 }
 
 .icon-button,
@@ -316,11 +641,11 @@ button {
 	height: 44px;
 	border-radius: 16px;
 	cursor: pointer;
-	transition: transform 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+	transition: transform 0.2s ease, background 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
 }
 
 .icon-button {
-	background: rgba(255, 255, 255, 0.09);
+	background: rgba(255, 255, 255, 0.08);
 	color: var(--text-color);
 }
 
@@ -350,24 +675,27 @@ button {
 }
 
 #send-button {
-	background: var(--primary-color);
+	background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
 	color: #1f1308;
+	font-size: 1.15rem;
 	font-weight: 900;
+	box-shadow: 0 10px 24px rgba(246, 130, 31, 0.32);
 }
 
 #send-button:hover:not(:disabled) {
-	background: var(--primary-hover);
+	box-shadow: 0 12px 32px rgba(246, 130, 31, 0.48);
 }
 
 #send-button:disabled,
 .icon-button:disabled {
-	opacity: 0.48;
+	opacity: 0.45;
 	cursor: not-allowed;
 	transform: none;
+	box-shadow: none;
 }
 
 .composer-help {
-	margin-top: 0.6rem;
+	margin-top: 0.65rem;
 	color: var(--text-muted);
 	font-size: 0.78rem;
 	text-align: center;
@@ -380,12 +708,13 @@ button {
 	z-index: 10;
 	place-items: center;
 	border: 2px dashed rgba(246, 130, 31, 0.75);
-	border-radius: 28px;
-	background: rgba(9, 11, 16, 0.82);
+	border-radius: var(--radius-lg);
+	background: rgba(7, 8, 13, 0.86);
 	color: var(--text-color);
+	font-family: var(--font-display);
 	font-size: clamp(1.2rem, 4vw, 2rem);
-	font-weight: 800;
-	backdrop-filter: blur(10px);
+	font-weight: 700;
+	backdrop-filter: blur(12px);
 }
 
 .drop-overlay.visible {
@@ -393,11 +722,22 @@ button {
 }
 
 footer {
-	width: min(1100px, 100%);
-	margin: 0.8rem auto 0;
+	width: min(1080px, 100%);
+	margin: 0.9rem auto 0;
 	color: var(--text-muted);
 	font-size: 0.82rem;
 	text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	body::before,
+	.brand-ring,
+	.brand-mark::before,
+	.status-dot,
+	.message,
+	.message-text.streaming::after {
+		animation: none;
+	}
 }
 
 @media (max-width: 720px) {
@@ -406,8 +746,7 @@ footer {
 	}
 
 	.site-header {
-		align-items: flex-start;
-		border-radius: 20px;
+		border-radius: 24px;
 	}
 
 	.status-pill {
@@ -436,7 +775,9 @@ footer {
 <div class="app-shell">
 	<header class="site-header">
 		<div class="brand" aria-label="KAMGPT home">
-			<div class="brand-mark">KG</div>
+			<div class="brand-ring" aria-hidden="true">
+				<div class="brand-mark">KG</div>
+			</div>
 			<div>
 				<h1>KAMGPT</h1>
 				<p>Powered by Kamgroup Technicals</p>
@@ -450,18 +791,35 @@ footer {
 
 	<main class="chat-container" aria-label="KAMGPT chat">
 		<div id="chat-messages" class="chat-messages">
-			<div class="message assistant-message">
-				<div class="message-avatar" aria-hidden="true">KG</div>
-				<p class="message-bubble">Hello! You have reached Kam's AI KAMGPT. How can I help you today?</p>
-			</div>
-			<div id="empty-prompts" class="empty-prompts" aria-label="Suggested prompts">
-				<button class="prompt-chip" type="button">Give me quick life advice</button>
-				<button class="prompt-chip" type="button">Help me write a message</button>
-				<button class="prompt-chip" type="button">Summarize an attached text file</button>
+			<div id="empty-prompts" class="hero" aria-label="Welcome">
+				<span class="hero-eyebrow">✦ Kam's personal AI</span>
+				<h2>Hey, I'm KAMGPT.</h2>
+				<p>Ask me anything — or drop in an image, a voice note, or a file and we'll dig into it together.</p>
+				<div class="empty-prompts" aria-label="Suggested prompts">
+					<button class="prompt-chip" type="button" data-prompt="Give me quick life advice">
+						<span class="prompt-icon" aria-hidden="true">💡</span>
+						<span class="prompt-copy"><strong>Quick life advice</strong><small>A sharp take in 30 seconds</small></span>
+					</button>
+					<button class="prompt-chip" type="button" data-prompt="Help me write a message">
+						<span class="prompt-icon" aria-hidden="true">✍️</span>
+						<span class="prompt-copy"><strong>Write a message</strong><small>Texts, emails, captions</small></span>
+					</button>
+					<button class="prompt-chip" type="button" data-prompt="Describe a photo I attach">
+						<span class="prompt-icon" aria-hidden="true">🖼️</span>
+						<span class="prompt-copy"><strong>Read an image</strong><small>Attach a photo, I'll break it down</small></span>
+					</button>
+					<button class="prompt-chip" type="button" data-prompt="Summarize a voice note I attach">
+						<span class="prompt-icon" aria-hidden="true">🎧</span>
+						<span class="prompt-copy"><strong>Hear a voice note</strong><small>Attach audio, get the gist</small></span>
+					</button>
+				</div>
 			</div>
 		</div>
 
-		<div class="typing-indicator" id="typing-indicator">KAMGPT is thinking...</div>
+		<div class="typing-indicator" id="typing-indicator">
+			<span>KAMGPT is thinking</span>
+			<span class="typing-dots"><span></span><span></span><span></span></span>
+		</div>
 
 		<form id="chat-form" class="composer">
 			<div id="attachment-tray" class="attachment-tray" aria-live="polite"></div>
@@ -470,19 +828,19 @@ footer {
 					id="file-input"
 					type="file"
 					multiple
-					accept=".txt,.md,.csv,.json,.html,.css,.js,.ts,.tsx,.jsx,.xml,.log,text/*,application/json"
+					accept=".txt,.md,.csv,.json,.html,.css,.js,.ts,.tsx,.jsx,.xml,.log,.yml,.yaml,.toml,.ini,.py,.rb,.php,.go,.rs,.java,.c,.cpp,.h,.sql,image/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.rtf,.zip,text/*,application/json"
 					hidden
 				/>
 				<button id="attach-button" class="icon-button" type="button" aria-label="Attach files">📎</button>
 				<textarea
 					id="user-input"
-					placeholder="Message KAMGPT or attach a text file..."
+					placeholder="Message KAMGPT, or attach an image, audio clip, or file..."
 					rows="1"
 					autofocus
 				></textarea>
-				<button id="send-button" type="submit" aria-label="Send message">➤</button>
+				<button id="send-button" type="submit" aria-label="Send message">↑</button>
 			</div>
-			<p class="composer-help">Attach small text-based files for summaries or questions. Press Enter to send, Shift + Enter for a new line.</p>
+			<p class="composer-help">Attach images, voice notes, code, or text files. Press Enter to send, Shift + Enter for a new line.</p>
 		</form>
 	</main>
 

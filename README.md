@@ -14,18 +14,18 @@ This template demonstrates how to build an AI-powered chat interface using Cloud
 - Easy customization of models and system prompts
 - Support for AI Gateway integration
 - Polished, responsive UI that works on mobile and desktop
-- Text-file attachment support for asking questions about small documents
+- Attach images, audio, text/code files, and documents directly from the composer
 
 ## Features
 
-- 💬 Polished, responsive chat interface
+- 💬 Polished, responsive chat interface with a fresh, modern look
 - ⚡ Server-Sent Events (SSE) for streaming responses
-- 🧠 Powered by Cloudflare Workers AI LLMs
+- 🧠 Powered by Cloudflare Workers AI LLMs, with automatic vision-model routing for images
 - 🛠️ Built with TypeScript and Cloudflare Workers
 - 📱 Mobile-friendly design
 - 🔄 Maintains chat history on the client
 - 🔎 Built-in Observability logging
-- 📎 Attach small text-based files directly from the composer
+- 📎 Attach images, audio clips, documents, and text/code files directly from the composer
 <!-- dash-content-end -->
 
 ## Getting Started
@@ -126,8 +126,8 @@ The backend is built with Cloudflare Workers and uses the Workers AI platform to
 The frontend is a simple HTML/CSS/JavaScript application that:
 
 1. Presents a polished chat interface with suggested prompts
-2. Supports small text-based file attachments from the composer or drag-and-drop
-3. Sends user messages and readable attachment contents to the API
+2. Supports text, image, audio, and document attachments from the composer or drag-and-drop
+3. Sends user messages, attachment contents, and image/audio attachments to the API
 4. Processes streaming responses in real-time
 5. Maintains chat history on the client side
 
@@ -135,7 +135,7 @@ The frontend is a simple HTML/CSS/JavaScript application that:
 
 ### Changing the Model
 
-To use a different AI model, update the `MODEL_ID` constant in `src/index.ts`. You can find available models in the [Cloudflare Workers AI documentation](https://developers.cloudflare.com/workers-ai/models/).
+To use a different AI model, update the `MODEL_ID` (text chat), `VISION_MODEL_ID` (image understanding), or `TRANSCRIPTION_MODEL_ID` (audio transcription) constants in `src/index.ts`. You can find available models in the [Cloudflare Workers AI documentation](https://developers.cloudflare.com/workers-ai/models/).
 
 ### Using AI Gateway
 
@@ -162,11 +162,12 @@ The UI styling is contained in the `<style>` section of `public/index.html`. You
 
 ### Attachments
 
-The frontend supports up to five small text-based attachments per message. Supported files are read in the browser and added to the chat prompt as text, so binary files, large documents, and image understanding require a dedicated upload/conversion flow before the model can reason about them.
+The frontend supports up to six attachments per message, across four kinds:
 
-### Attachments
-
-The frontend supports up to five small text-based attachments per message. Supported files are read in the browser and added to the chat prompt as text, so binary files, large documents, and image understanding require a dedicated upload/conversion flow before the model can reason about them.
+- **Text and code files** (`.txt`, `.md`, `.json`, `.py`, `.ts`, etc.) are read in the browser and inlined into the prompt as text, up to 750 KB each.
+- **Images** (`.png`, `.jpg`, `.webp`, `.gif`, etc., up to 5 MB each) are sent as an `image_url` content part. When a message includes an image, the backend automatically routes the request to the vision-capable model (`VISION_MODEL_ID`) instead of the default text model.
+- **Audio clips** (`.mp3`, `.wav`, `.m4a`, etc., up to 8 MB each) are transcribed server-side via `/api/transcribe` (using `TRANSCRIPTION_MODEL_ID`), and the transcript is folded into the prompt as text.
+- **Documents** (`.pdf`, `.docx`, `.xlsx`, `.pptx`, `.zip`, etc., up to 5 MB each) are accepted, but their contents aren't extracted yet — only the filename and metadata are shared with the model, so ask the user to paste key excerpts if the content matters.
 
 ## Resources
 
