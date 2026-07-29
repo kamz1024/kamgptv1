@@ -11,12 +11,20 @@ import { Env, ChatMessage, ChatMessageContentPart } from "./types";
 
 // Model IDs for Workers AI models
 // https://developers.cloudflare.com/workers-ai/models/
-const MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+// The throughput-optimized 8B model keeps responses snappy under
+// concurrent load; swap back to "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+// if you'd rather trade speed for quality.
+const MODEL_ID = "@cf/meta/llama-3.1-8b-instruct-fast";
 const VISION_MODEL_ID = "@cf/meta/llama-3.2-11b-vision-instruct";
 const TRANSCRIPTION_MODEL_ID = "@cf/openai/whisper-large-v3-turbo";
 
 // Largest base64 audio payload accepted by /api/transcribe (roughly 8MB of audio).
 const MAX_AUDIO_BASE64_LENGTH = 11_000_000;
+
+// Only the most recent exchanges are sent to the model. Without a cap the
+// prompt grows with every turn (including any inlined attachments and
+// image data URLs), which makes responses progressively slower.
+const MAX_HISTORY_MESSAGES = 16;
 
 // Default system prompt
 const SYSTEM_PROMPT =
@@ -154,18 +162,27 @@ async function handleChatRequest(
 			messages: ChatMessage[];
 		};
 
-		// Add system prompt if not present
-		if (!messages.some((msg) => msg.role === "system")) {
-			messages.unshift({ role: "system", content: SYSTEM_PROMPT });
-		}
+		// Cap the history and re-add the system prompt, so prompts stay small
+		// and fast no matter how long the conversation gets. Old messages
+		// falling out of the window also lets image-heavy conversations
+		// return to the fast text model once the image ages out.
+		const recentMessages = messages
+			.filter((msg) => msg.role !== "system")
+			.slice(-MAX_HISTORY_MESSAGES);
+		const trimmedMessages: ChatMessage[] = [
+			{ role: "system", content: SYSTEM_PROMPT },
+			...recentMessages,
+		];
 
 		// Messages that include an attached image need the vision-capable
 		// model, which also needs the conversation reshaped to fit its rules.
-		const hasImage = conversationHasImage(messages);
-		const modelId = hasImage ? VISION_MODEL_ID : MODEL_ID;
+		const hasImage = conversationHasImage(trimmedMessages);
+		// Cast needed: the local wrangler type catalog predates the
+		// "-fast" model, which is live per current Workers AI docs.
+		const modelId = (hasImage ? VISION_MODEL_ID : MODEL_ID) as keyof AiModels;
 		const modelMessages = hasImage
-			? prepareVisionMessages(messages)
-			: messages;
+			? prepareVisionMessages(trimmedMessages)
+			: trimmedMessages;
 
 		const runModel = () =>
 			env.AI.run(

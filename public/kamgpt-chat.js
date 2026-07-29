@@ -326,6 +326,7 @@ async function sendMessage() {
 		}
 
 		chatHistory.push({ role: "assistant", content: responseText });
+		compactChatHistory();
 	} catch (error) {
 		console.error("Error:", error);
 		const errorMessage = error?.message && error.message !== "Failed to get response"
@@ -495,6 +496,33 @@ async function imageFileToDataUrl(file) {
 		console.warn("Could not downscale image, sending original:", error);
 		return readFileAsDataUrl(file);
 	}
+}
+
+// Image data URLs are heavy, and the whole history is uploaded with every
+// request. Keep only the most recent image (so follow-up questions still
+// work) and flatten older image messages to text.
+function compactChatHistory() {
+	let lastImageIndex = -1;
+	chatHistory.forEach((message, index) => {
+		if (
+			Array.isArray(message.content) &&
+			message.content.some((part) => part.type === "image_url")
+		) {
+			lastImageIndex = index;
+		}
+	});
+
+	chatHistory = chatHistory.map((message, index) => {
+		if (index === lastImageIndex || !Array.isArray(message.content)) {
+			return message;
+		}
+		const text = message.content
+			.filter((part) => part.type === "text")
+			.map((part) => part.text || "")
+			.join("\n")
+			.trim();
+		return { role: message.role, content: `${text}\n[image shared earlier]`.trim() };
+	});
 }
 
 function setInputState(enabled) {
